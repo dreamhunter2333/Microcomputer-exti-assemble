@@ -1,0 +1,815 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         
+    2 00000000 00000001 
+                       BIT0    EQU              0X00000001
+    3 00000000 00000004 
+                       BIT2    EQU              0X00000004
+    4 00000000 00000020 
+                       BIT5    EQU              0X00000020
+    5 00000000 00000100 
+                       BIT8    EQU              0X00000100
+    6 00000000 00000200 
+                       BIT9    EQU              0X00000200
+    7 00000000 00000400 
+                       BIT10   EQU              0X00000400
+    8 00000000 00000800 
+                       BIT11   EQU              0X00000800
+    9 00000000 00000100 
+                       LED0    EQU              BIT8        ;LED3--PA.0
+   10 00000000 00000200 
+                       LED1    EQU              BIT9        ;LED1--PA.1
+   11 00000000 00000400 
+                       LED2    EQU              BIT10       ;LED2--PA.2
+   12 00000000 00000800 
+                       LED3    EQU              BIT11
+   13 00000000 E000E010 
+                       NVIC_ST_CTRL_R
+                               EQU              0xE000E010
+   14 00000000 E000E014 
+                       NVIC_ST_RELOAD_R
+                               EQU              0xE000E014
+   15 00000000 E000E018 
+                       NVIC_ST_CURRENT_R
+                               EQU              0xE000E018
+   16 00000000 40011400 
+                       GPIOD   EQU              0X40011400  ;GPIOA µØÖ·
+   17 00000000 40011400 
+                       GPIOD_CRL
+                               EQU              0X40011400  ;µÍÅäÖÃ¼Ä´æÆ÷
+   18 00000000 40011404 
+                       GPIOD_CRH
+                               EQU              0X40011404  ;¸ßÅäÖÃ¼Ä´æÆ÷
+   19 00000000 4001140C 
+                       GPIOD_ODR
+                               EQU              0X4001140C  ;Êä³ö£¬Æ«ÒÆµØÖ·0Ch
+   20 00000000 40011410 
+                       GPIOD_BSRR
+                               EQU              0X40011410  ;µÍÖÃÎ»£¬¸ßÇå³ýÆ«ÒÆ
+                                                            µØÖ·10h
+   21 00000000 40011414 
+                       GPIOD_BRR
+                               EQU              0X40011414  ;Çå³ý£¬Æ«ÒÆµØÖ·14h
+   22 00000000 00000020 
+                       IOPDEN  EQU              BIT5        ;GPIOAÊ¹ÄÜÎ»
+   23 00000000 00000004 
+                       IOPAEN  EQU              BIT2        ;GPIOAÊ¹ÄÜÎ»
+   24 00000000 00000001 
+                       KEY     EQU              BIT0        ;°´¼üÔÚPA.0
+   25 00000000 40010800 
+                       GPIOA   EQU              0X40010800
+   26 00000000 40010800 
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                       GPIOA_CRL
+                               EQU              0X40010800  ;µÍÅäÖÃ¼Ä´æÆ÷
+   27 00000000 40010808 
+                       GPIOA_IDR
+                               EQU              0X40010808
+   28 00000000 40021018 
+                       RCC_APB2ENR
+                               EQU              0X40021018
+   29 00000000         
+   30 00000000 20002000 
+                       STACK_TOP
+                               EQU              0X20002000
+   31 00000000                 AREA             RESET,CODE,READONLY 
+                                                            ;AREA²»ÄÜ¶¥¸ñÐ´
+   32 00000000 20002000        DCD              STACK_TOP   ;MSPÖ÷¶ÑÕ»Ö¸Õë
+   33 00000004 00000000        DCD              START       ;¸´Î»£¬PC³õÊ¼Öµ 
+   34 00000008         
+   35 00000008                 ENTRY                        ;Ö¸Ê¾¿ªÊ¼Ö´ÐÐ,ENTRY
+                                                            ±ØÐëÒª¶¥¸ñÐ´
+   36 00000008         START                                ;ËùÓÐµÄ±êºÅ±ØÐë¶¥¸ñ
+                                                            Ð´£¬ÇÒÎÞÃ°ºÅ
+   37 00000008 F000 F85F       BL.W             RCC_CONFIG_72MHZ 
+                                                            ;Ö¸Áî²»ÄÜ¶¥¸ñÐ´
+   38 0000000C F000 F89E       BL.W             SysTick_Init
+   39 00000010 495D            LDR              R1,=RCC_APB2ENR
+   40 00000012 6808            LDR              R0,[R1]     ;¶Á
+   41 00000014 F04F 0220       LDR              R2,=IOPDEN
+   42 00000018 EA40 0002       ORR              R0,R2       ;¸Ä
+   43 0000001C F04F 0204       LDR              R2,=IOPAEN
+   44 00000020 EA40 0002       ORR              R0,R2       ;¸Ä
+   45 00000024 6008            STR              R0,[R1]     ;Ð´£¬Ê¹ÄÜGPIOAÊ±ÖÓ
+   46 00000026         ;LED0--PA.0 ÍÆÍìÊä³ö£¬50MHz
+   47 00000026         ;LED1--PA.1  ÍÆÍìÊä³ö£¬50MHz
+   48 00000026         ;LED2--PA.2  ÍÆÍìÊä³ö£¬50MHz
+   49 00000026 F243 3033       LDR              R0,=0x3333
+   50 0000002A 4958            LDR              R1,=GPIOD_CRH ;PA.1\2\3¾ùÔÚµÍ¼Ä
+                                                            ´æÆ÷
+   51 0000002C 6008            STR              R0,[R1]
+   52 0000002E BF00            NOP
+   53 00000030 F04F 0004       MOV              R0,#0X04
+   54 00000034 4956            LDR              R1,=GPIOA_CRL
+   55 00000036 6008            STR              R0,[R1]
+   56 00000038         
+   57 00000038 4956            LDR              R1,=GPIOD_ODR
+   58 0000003A F44F 6270       LDR              R2,=0x00000F00 ;½«PA.1\2\3Êä³ö¸
+                                                            ßµçÆ½
+   59 0000003E F04F 0301       MOV              R3,#1
+   60 00000042 4C55            LDR              R4,=GPIOA_IDR ;R4ÓÃÓÚÉ¨Ãè°´¼ü
+   61 00000044         LOOP
+   62 00000044 6825            LDR              R5,[R4]
+   63 00000046 F005 0501       AND.W            R5,#KEY
+   64 0000004A 2D00            CMP              R5,#0
+   65 0000004C D1FA            BNE              LOOP
+   66 0000004E B401            PUSH             {R0}
+   67 00000050 4852            LDR              R0,=720000
+   68 00000052 F000 F88C       BL.W             SysTick_Wait ;ÑÓÊ±10msÓÃÓÚÏû³ý¶
+                                                            ¶¶¯
+   69 00000056 BC01            POP              {R0}
+   70 00000058 6825            LDR              R5,[R4]
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   71 0000005A F005 0501       AND.W            R5,#KEY
+   72 0000005E 2D00            CMP              R5,#0
+   73 00000060 D1F0            BNE              LOOP
+   74 00000062 F000 F807       BL.W             LEDLED
+   75 00000066 6008            STR              R0,[R1]
+   76 00000068         WAIT_TO_UP                           ;µÈ´ý°´¼üµ¯Æð
+   77 00000068 6825            LDR              R5,[R4]
+   78 0000006A F005 0501       AND.W            R5,#KEY
+   79 0000006E 2D00            CMP              R5,#0
+   80 00000070 D0FA            BEQ              WAIT_TO_UP
+   81 00000072 E7E7            B                LOOP
+   82 00000074         LEDLED
+   83 00000074 600A            STR              R2,[R1]
+   84 00000076 484A            LDR              R0,=72000000
+   85 00000078 F000 F879       BL.W             SysTick_Wait
+   86 0000007C F482 7280       EOR              R2,#LED0    ;·­×ªLED3
+   87 00000080 F103 0301       ADD              R3,#1       ;¼ÆÊý¼Ó1
+   88 00000084         
+   89 00000084 2B01            CMP              R3,#1
+   90 00000086 D00A            BEQ              STATE1
+   91 00000088 2B03            CMP              R3,#3
+   92 0000008A D00D            BEQ              STATE2
+   93 0000008C 2B05            CMP              R3,#5
+   94 0000008E D00E            BEQ              STATE3
+   95 00000090 2B07            CMP              R3,#7
+   96 00000092 D011            BEQ              STATE4
+   97 00000094 2B08            CMP              R3,#8
+   98 00000096 D014            BEQ              STATE6
+   99 00000098 2B0A            CMP              R3,#10
+  100 0000009A D010            BEQ              STATE5
+  101 0000009C E014            B                GOON
+  102 0000009E         
+  103 0000009E         STATE1                               ;×´Ì¬1
+  104 0000009E F482 7200       EOR              R2,#LED1
+  105 000000A2 F482 6280       EOR              R2,#LED2
+  106 000000A6 E00F            B                GOON
+  107 000000A8         STATE2                               ;×´Ì¬2
+  108 000000A8 F482 6280       EOR              R2,#LED2
+  109 000000AC E00C            B                GOON
+  110 000000AE         STATE3                               ;×´Ì¬3
+  111 000000AE F482 7200       EOR              R2,#LED1
+  112 000000B2 F482 6280       EOR              R2,#LED2
+  113 000000B6 E007            B                GOON
+  114 000000B8         STATE4                               ;×´Ì¬4
+  115 000000B8 F482 6280       EOR              R2,#LED2
+  116 000000BC E004            B                GOON
+  117 000000BE         STATE5                               ;×´Ì¬5
+  118 000000BE F04F 0300       MOV              R3,#0
+  119 000000C2         STATE6                               ;×´Ì¬4
+  120 000000C2 F482 6200       EOR              R2,#LED3
+  121 000000C6 E7FF            B                GOON
+  122 000000C8         GOON
+  123 000000C8 E7BC            B                LOOP        ;¼ÌÐøÑ­»·
+  124 000000CA         
+  125 000000CA         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  126 000000CA         ;;;RCC  Ê±ÖÓÅäÖÃ HCLK=72MHz=HSE*9
+  127 000000CA         ;;;PCLK2=HCLK  PCLK1=HCLK/2
+  128 000000CA         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  129 000000CA         RCC_CONFIG_72MHZ
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  130 000000CA 4936            LDR              R1,=0X40021000 ;RCC_CR
+  131 000000CC 6808            LDR              R0,[R1]
+  132 000000CE F44F 3280       LDR              R2,=0X00010000 ;HSEON
+  133 000000D2 EA40 0002       ORR              R0,R2
+  134 000000D6 6008            STR              R0,[R1]
+  135 000000D8         WAIT_HSE_RDY
+  136 000000D8 F44F 3200       LDR              R2,=0X00020000 ;HSERDY
+  137 000000DC 6808            LDR              R0,[R1]
+  138 000000DE 4010            ANDS             R0,R2
+  139 000000E0 2800            CMP              R0,#0
+  140 000000E2 D0F9            BEQ              WAIT_HSE_RDY
+  141 000000E4 4930            LDR              R1,=0X40022000 ;FLASH_ACR
+  142 000000E6 F04F 0012       MOV              R0,#0X12
+  143 000000EA 6008            STR              R0,[R1]
+  144 000000EC 492F            LDR              R1,=0X40021004 ;RCC_CFGRÊ±ÖÓÅäÖ
+                                                            Ã¼Ä´æÆ÷
+  145 000000EE 6808            LDR              R0,[R1]
+  146 000000F0         ;PLL±¶ÆµÏµÊý,PCLK2,PCLK1·ÖÆµÉèÖÃ
+  147 000000F0         ;HSE 9±¶ÆµPCLK2=HCLK,PCLK1=HCLK/2
+  148 000000F0         ;HCLK=72MHz 0x001D0400
+  149 000000F0         ;HCLK=64MHz 0x00190400
+  150 000000F0         ;HCLK=48MHz 0x00110400
+  151 000000F0         ;HCLK=32MHz 0x00090400
+  152 000000F0         ;HCLK=24MHz 0x00050400
+  153 000000F0         ;HCLK=16MHz 0x00010400
+  154 000000F0 4A2F            LDR              R2,=0x001D0400
+  155 000000F2 EA40 0002       ORR              R0,R2
+  156 000000F6 6008            STR              R0,[R1]
+  157 000000F8 492A            LDR              R1,=0X40021000 ;RCC_CR  
+  158 000000FA 6808            LDR              R0,[R1]
+  159 000000FC F04F 7280       LDR              R2,=0X01000000 ;PLLON
+  160 00000100 EA40 0002       ORR              R0,R2
+  161 00000104 6008            STR              R0,[R1]
+  162 00000106         WAIT_PLL_RDY
+  163 00000106 F04F 7200       LDR              R2,=0X02000000 ;PLLRDY
+  164 0000010A 6808            LDR              R0,[R1]
+  165 0000010C 4010            ANDS             R0,R2
+  166 0000010E 2800            CMP              R0,#0
+  167 00000110 D0F9            BEQ              WAIT_PLL_RDY
+  168 00000112 4926            LDR              R1,=0X40021004 ;RCC_CFGR
+  169 00000114 6808            LDR              R0,[R1]
+  170 00000116 F04F 0202       MOV              R2,#0X02
+  171 0000011A EA40 0002       ORR              R0,R2
+  172 0000011E 6008            STR              R0,[R1]
+  173 00000120         WAIT_HCLK_USEPLL
+  174 00000120 6808            LDR              R0,[R1]
+  175 00000122 F010 0008       ANDS             R0,#0X08
+  176 00000126 2808            CMP              R0,#0X08
+  177 00000128 D1FA            BNE              WAIT_HCLK_USEPLL
+  178 0000012A 4770            BX               LR
+  179 0000012C         
+  180 0000012C         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  181 0000012C         ;ÑÓÊ±R0£¨ms£©£¬Îó²î((R0-1)*4+12)/8 us
+  182 0000012C         ;ÑÓÊ±½Ï³¤Ê±£¬Îó²îÐ¡ÓÚ0.1%
+  183 0000012C         DELAY_NMS
+  184 0000012C B402            PUSH             {R1}        ;2¸öÖÜÆÚ
+  185 0000012E         DELAY_NMSLOOP
+  186 0000012E F1A0 0001       SUB              R0,#1
+  187 00000132 F44F 717A       MOV              R1,#1000
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  188 00000136         DELAY_ONEUS
+  189 00000136 F1A1 0101       SUB              R1,#1
+  190 0000013A BF00            NOP
+  191 0000013C BF00            NOP
+  192 0000013E BF00            NOP
+  193 00000140 2900            CMP              R1,#0
+  194 00000142 D1F8            BNE              DELAY_ONEUS
+  195 00000144 2800            CMP              R0,#0
+  196 00000146 D1F2            BNE              DELAY_NMSLOOP
+  197 00000148 BC02            POP              {R1}
+  198 0000014A 4770            BX               LR
+  199 0000014C         
+  200 0000014C         SysTick_Init
+  201 0000014C         ; disable SysTick during setup
+  202 0000014C 4919            LDR              R1, =NVIC_ST_CTRL_R
+  203 0000014E F04F 0000       MOV              R0, #0      ; Clear Enable     
+                                                                
+  204 00000152 6008            STR              R0, [R1]
+  205 00000154         ; set reload to maximum reload value
+  206 00000154 4918            LDR              R1, =NVIC_ST_RELOAD_R
+  207 00000156 F06F 407F       LDR              R0, =0x00FFFFFF ;    ; Specify 
+                                                            RELOAD value
+  208 0000015A 6008            STR              R0, [R1]    ; reload at maximum
+                                                                   
+  209 0000015C         ; writing any value to CURRENT clears it
+  210 0000015C 4917            LDR              R1, =NVIC_ST_CURRENT_R
+  211 0000015E F04F 0000       MOV              R0, #0
+  212 00000162 6008            STR              R0, [R1]    ; clear counter
+  213 00000164         ; enable SysTick with core clock
+  214 00000164 4913            LDR              R1, =NVIC_ST_CTRL_R
+  215 00000166 F04F 0005       MOV              R0, #0x0005 ; Enable but no int
+                                                            errupts (later)
+  216 0000016A 6008            STR              R0, [R1]    ; ENABLE and CLK_SR
+                                                            C bits set
+  217 0000016C 4770            BX               LR
+  218 0000016E         
+  219 0000016E         SysTick_Wait
+  220 0000016E F1A0 0001       SUB              R0, R0, #1  ; delay-1
+  221 00000172 4E11            LDR              R6, =NVIC_ST_RELOAD_R
+  222 00000174 6030            STR              R0, [R6]    ; time to wait
+  223 00000176 4E11            LDR              R6, =NVIC_ST_CURRENT_R
+  224 00000178 6030            STR              R0, [R6]    ; any value written
+                                                             to CURRENT clears
+  225 0000017A 4E0E            LDR              R6, =NVIC_ST_CTRL_R
+  226 0000017C         SysTick_Wait_loop
+  227 0000017C 6830            LDR              R0, [R6]    ; read status
+  228 0000017E F410 3080       ANDS             R0, R0, #0x00010000 ; bit 16 is
+                                                             COUNT flag
+  229 00000182 D0FB            BEQ              SysTick_Wait_loop ; repeat unti
+                                                            l flag set
+  230 00000184 4770            BX               LR
+  231 00000186         
+  232 00000186 BF00            NOP
+  233 00000188                 END
+              40021018 
+              40011404 
+              40010800 
+              4001140C 
+              40010808 
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+              000AFC80 
+              044AA200 
+              40021000 
+              40022000 
+              40021004 
+              001D0400 
+              E000E010 
+              E000E014 
+              E000E018 
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+ork --depend=.\objects\exti.d -o.\objects\exti.o -I"D:\wjyl\exti assemble\RTE" 
+-ID:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.1.0\Device\Include -ID:\Keil_v5\ARM\
+CMSIS\Include --predefine="__UVISION_VERSION SETA 518" --predefine="STM32F10X_H
+D SETA 1" --list=.\listings\exti.lst exti.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+DELAY_NMS 0000012C
+
+Symbol: DELAY_NMS
+   Definitions
+      At line 183 in file exti.s
+   Uses
+      None
+Comment: DELAY_NMS unused
+DELAY_NMSLOOP 0000012E
+
+Symbol: DELAY_NMSLOOP
+   Definitions
+      At line 185 in file exti.s
+   Uses
+      At line 196 in file exti.s
+Comment: DELAY_NMSLOOP used once
+DELAY_ONEUS 00000136
+
+Symbol: DELAY_ONEUS
+   Definitions
+      At line 188 in file exti.s
+   Uses
+      At line 194 in file exti.s
+Comment: DELAY_ONEUS used once
+GOON 000000C8
+
+Symbol: GOON
+   Definitions
+      At line 122 in file exti.s
+   Uses
+      At line 101 in file exti.s
+      At line 106 in file exti.s
+      At line 109 in file exti.s
+      At line 113 in file exti.s
+      At line 116 in file exti.s
+      At line 121 in file exti.s
+
+LEDLED 00000074
+
+Symbol: LEDLED
+   Definitions
+      At line 82 in file exti.s
+   Uses
+      At line 74 in file exti.s
+Comment: LEDLED used once
+LOOP 00000044
+
+Symbol: LOOP
+   Definitions
+      At line 61 in file exti.s
+   Uses
+      At line 65 in file exti.s
+      At line 73 in file exti.s
+      At line 81 in file exti.s
+      At line 123 in file exti.s
+
+RCC_CONFIG_72MHZ 000000CA
+
+Symbol: RCC_CONFIG_72MHZ
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 129 in file exti.s
+   Uses
+      At line 37 in file exti.s
+Comment: RCC_CONFIG_72MHZ used once
+RESET 00000000
+
+Symbol: RESET
+   Definitions
+      At line 31 in file exti.s
+   Uses
+      None
+Comment: RESET unused
+START 00000008
+
+Symbol: START
+   Definitions
+      At line 36 in file exti.s
+   Uses
+      At line 33 in file exti.s
+Comment: START used once
+STATE1 0000009E
+
+Symbol: STATE1
+   Definitions
+      At line 103 in file exti.s
+   Uses
+      At line 90 in file exti.s
+Comment: STATE1 used once
+STATE2 000000A8
+
+Symbol: STATE2
+   Definitions
+      At line 107 in file exti.s
+   Uses
+      At line 92 in file exti.s
+Comment: STATE2 used once
+STATE3 000000AE
+
+Symbol: STATE3
+   Definitions
+      At line 110 in file exti.s
+   Uses
+      At line 94 in file exti.s
+Comment: STATE3 used once
+STATE4 000000B8
+
+Symbol: STATE4
+   Definitions
+      At line 114 in file exti.s
+   Uses
+      At line 96 in file exti.s
+Comment: STATE4 used once
+STATE5 000000BE
+
+Symbol: STATE5
+   Definitions
+      At line 117 in file exti.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 100 in file exti.s
+Comment: STATE5 used once
+STATE6 000000C2
+
+Symbol: STATE6
+   Definitions
+      At line 119 in file exti.s
+   Uses
+      At line 98 in file exti.s
+Comment: STATE6 used once
+SysTick_Init 0000014C
+
+Symbol: SysTick_Init
+   Definitions
+      At line 200 in file exti.s
+   Uses
+      At line 38 in file exti.s
+Comment: SysTick_Init used once
+SysTick_Wait 0000016E
+
+Symbol: SysTick_Wait
+   Definitions
+      At line 219 in file exti.s
+   Uses
+      At line 68 in file exti.s
+      At line 85 in file exti.s
+
+SysTick_Wait_loop 0000017C
+
+Symbol: SysTick_Wait_loop
+   Definitions
+      At line 226 in file exti.s
+   Uses
+      At line 229 in file exti.s
+Comment: SysTick_Wait_loop used once
+WAIT_HCLK_USEPLL 00000120
+
+Symbol: WAIT_HCLK_USEPLL
+   Definitions
+      At line 173 in file exti.s
+   Uses
+      At line 177 in file exti.s
+Comment: WAIT_HCLK_USEPLL used once
+WAIT_HSE_RDY 000000D8
+
+Symbol: WAIT_HSE_RDY
+   Definitions
+      At line 135 in file exti.s
+   Uses
+      At line 140 in file exti.s
+Comment: WAIT_HSE_RDY used once
+WAIT_PLL_RDY 00000106
+
+Symbol: WAIT_PLL_RDY
+   Definitions
+      At line 162 in file exti.s
+   Uses
+      At line 167 in file exti.s
+Comment: WAIT_PLL_RDY used once
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+WAIT_TO_UP 00000068
+
+Symbol: WAIT_TO_UP
+   Definitions
+      At line 76 in file exti.s
+   Uses
+      At line 80 in file exti.s
+Comment: WAIT_TO_UP used once
+22 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+BIT0 00000001
+
+Symbol: BIT0
+   Definitions
+      At line 2 in file exti.s
+   Uses
+      At line 24 in file exti.s
+Comment: BIT0 used once
+BIT10 00000400
+
+Symbol: BIT10
+   Definitions
+      At line 7 in file exti.s
+   Uses
+      At line 11 in file exti.s
+Comment: BIT10 used once
+BIT11 00000800
+
+Symbol: BIT11
+   Definitions
+      At line 8 in file exti.s
+   Uses
+      At line 12 in file exti.s
+Comment: BIT11 used once
+BIT2 00000004
+
+Symbol: BIT2
+   Definitions
+      At line 3 in file exti.s
+   Uses
+      At line 23 in file exti.s
+Comment: BIT2 used once
+BIT5 00000020
+
+Symbol: BIT5
+   Definitions
+      At line 4 in file exti.s
+   Uses
+      At line 22 in file exti.s
+Comment: BIT5 used once
+BIT8 00000100
+
+Symbol: BIT8
+   Definitions
+      At line 5 in file exti.s
+   Uses
+      At line 9 in file exti.s
+Comment: BIT8 used once
+BIT9 00000200
+
+Symbol: BIT9
+   Definitions
+      At line 6 in file exti.s
+   Uses
+      At line 10 in file exti.s
+Comment: BIT9 used once
+GPIOA 40010800
+
+Symbol: GPIOA
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+   Definitions
+      At line 25 in file exti.s
+   Uses
+      None
+Comment: GPIOA unused
+GPIOA_CRL 40010800
+
+Symbol: GPIOA_CRL
+   Definitions
+      At line 26 in file exti.s
+   Uses
+      At line 54 in file exti.s
+Comment: GPIOA_CRL used once
+GPIOA_IDR 40010808
+
+Symbol: GPIOA_IDR
+   Definitions
+      At line 27 in file exti.s
+   Uses
+      At line 60 in file exti.s
+Comment: GPIOA_IDR used once
+GPIOD 40011400
+
+Symbol: GPIOD
+   Definitions
+      At line 16 in file exti.s
+   Uses
+      None
+Comment: GPIOD unused
+GPIOD_BRR 40011414
+
+Symbol: GPIOD_BRR
+   Definitions
+      At line 21 in file exti.s
+   Uses
+      None
+Comment: GPIOD_BRR unused
+GPIOD_BSRR 40011410
+
+Symbol: GPIOD_BSRR
+   Definitions
+      At line 20 in file exti.s
+   Uses
+      None
+Comment: GPIOD_BSRR unused
+GPIOD_CRH 40011404
+
+Symbol: GPIOD_CRH
+   Definitions
+      At line 18 in file exti.s
+   Uses
+      At line 50 in file exti.s
+Comment: GPIOD_CRH used once
+GPIOD_CRL 40011400
+
+Symbol: GPIOD_CRL
+   Definitions
+      At line 17 in file exti.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Absolute symbols
+
+      None
+Comment: GPIOD_CRL unused
+GPIOD_ODR 4001140C
+
+Symbol: GPIOD_ODR
+   Definitions
+      At line 19 in file exti.s
+   Uses
+      At line 57 in file exti.s
+Comment: GPIOD_ODR used once
+IOPAEN 00000004
+
+Symbol: IOPAEN
+   Definitions
+      At line 23 in file exti.s
+   Uses
+      At line 43 in file exti.s
+Comment: IOPAEN used once
+IOPDEN 00000020
+
+Symbol: IOPDEN
+   Definitions
+      At line 22 in file exti.s
+   Uses
+      At line 41 in file exti.s
+Comment: IOPDEN used once
+KEY 00000001
+
+Symbol: KEY
+   Definitions
+      At line 24 in file exti.s
+   Uses
+      At line 63 in file exti.s
+      At line 71 in file exti.s
+      At line 78 in file exti.s
+
+LED0 00000100
+
+Symbol: LED0
+   Definitions
+      At line 9 in file exti.s
+   Uses
+      At line 86 in file exti.s
+Comment: LED0 used once
+LED1 00000200
+
+Symbol: LED1
+   Definitions
+      At line 10 in file exti.s
+   Uses
+      At line 104 in file exti.s
+      At line 111 in file exti.s
+
+LED2 00000400
+
+Symbol: LED2
+   Definitions
+      At line 11 in file exti.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 105 in file exti.s
+      At line 108 in file exti.s
+      At line 112 in file exti.s
+      At line 115 in file exti.s
+
+LED3 00000800
+
+Symbol: LED3
+   Definitions
+      At line 12 in file exti.s
+   Uses
+      At line 120 in file exti.s
+Comment: LED3 used once
+NVIC_ST_CTRL_R E000E010
+
+Symbol: NVIC_ST_CTRL_R
+   Definitions
+      At line 13 in file exti.s
+   Uses
+      At line 202 in file exti.s
+      At line 214 in file exti.s
+      At line 225 in file exti.s
+
+NVIC_ST_CURRENT_R E000E018
+
+Symbol: NVIC_ST_CURRENT_R
+   Definitions
+      At line 15 in file exti.s
+   Uses
+      At line 210 in file exti.s
+      At line 223 in file exti.s
+
+NVIC_ST_RELOAD_R E000E014
+
+Symbol: NVIC_ST_RELOAD_R
+   Definitions
+      At line 14 in file exti.s
+   Uses
+      At line 206 in file exti.s
+      At line 221 in file exti.s
+
+RCC_APB2ENR 40021018
+
+Symbol: RCC_APB2ENR
+   Definitions
+      At line 28 in file exti.s
+   Uses
+      At line 39 in file exti.s
+Comment: RCC_APB2ENR used once
+STACK_TOP 20002000
+
+Symbol: STACK_TOP
+   Definitions
+      At line 30 in file exti.s
+   Uses
+      At line 32 in file exti.s
+Comment: STACK_TOP used once
+28 symbols
+384 symbols in table
